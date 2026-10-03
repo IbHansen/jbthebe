@@ -1,0 +1,23 @@
+version: 1
+project:
+  id: modelflow-jbthebe
+  title: ModelFlow - live code in the browser
+  authors:
+    - name: Ib Hansen
+  description: >-
+    A test of a Jupyter Book whose notebook cells can be run in the reader's browser
+    (thebe-lite: Python in the page through Pyodide/JupyterLite, nothing to install,
+    no server). The example is the carbon-tax simulation on the Pakistan model.
+  # Live code: each notebook page gets a power button that starts a Pyodide kernel in
+  # the browser; after that every code cell can be edited and run.
+  jupyter:
+    lite: true
+  toc:
+    - file: intro.md
+      title: Introduction
+    - file: PAK_CarbonTax.ipynb
+      title: Carbon tax in Pakistan
+site:
+  template: book-theme
+  options:
+    logo_text: ModelFlow live code

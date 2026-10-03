@@ -1,0 +1,216 @@
+\documentclass[a4paper,11pt,oneside]{book}
+\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage{changepage}
+\usepackage{framed}
+\usepackage{hyperref}
+\usepackage{amssymb}
+\bibliographystyle{abbrvnat}
+
+% Make list items more compact
+\usepackage{enumitem}
+\setlist[itemize]{noitemsep, topsep=0pt}
+
+[- IMPORTS -]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%  ModelFlow changes  %%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% 1. Promote every heading one level.
+%    MyST renders each article's title as \section, so nothing ever calls
+%    \chapter and the book class leaves its chapter counter at 0 - which is
+%    why the contents used to read 0.1, 0.2, ... Capture all the originals
+%    first, then reassign, so none of these aliases is self-referential.
+\let\origsection\section
+\let\origsubsection\subsection
+\let\origsubsubsection\subsubsection
+\let\origparagraph\paragraph
+\let\paragraph\origsubsubsection
+\let\subsubsection\origsubsection
+\let\subsection\origsection
+\let\section\chapter
+
+% 2. Wrap code instead of letting it run into the margin.
+%    Plain verbatim never breaks a line. These listings hold model output
+%    with single tokens hundreds of characters long, so breakanywhere is
+%    needed as well - there is no space to break at.
+%    The rule down the left marks a block as machine text rather than prose, so
+%    the code in a notebook chapter can be picked out at a glance. MyST emits the
+%    same verbatim environment for a cell's source and for its printed output, so
+%    the two cannot be told apart here; both get the rule.
+\usepackage{fvextra}
+\definecolor{codebar}{rgb}{0.62, 0.66, 0.78}
+\DefineVerbatimEnvironment{verbatim}{Verbatim}{%
+  breaklines=true,
+  breakanywhere=true,
+  breaksymbolleft={},
+  breaksymbolright=\hbox{\tiny\ensuremath{\hookrightarrow}},
+  frame=leftline,
+  framerule=1.5pt,
+  framesep=7pt,
+  rulecolor=\color{codebar},
+  fontsize=\small}
+
+% 3. Contents lists chapters and sections only; deeper levels make the
+%    table of contents longer than the chapters it points at.
+\setcounter{tocdepth}{1}
+
+% 4. Emoji used as heading decoration in the notebooks. Latin Modern has
+%    no glyph for them, so xelatex drops them silently and leaves a gap at
+%    the start of the heading. Map them away, including the invisible
+%    variation selector U+FE0F that follows some of them.
+\usepackage{newunicodechar}
+\newunicodechar{💡}{}
+\newunicodechar{⚙}{}
+\newunicodechar{🧮}{}
+\newunicodechar{️}{}
+%    Latin Modern Typewriter has no em dash, ellipsis or warning sign, and these
+%    turn up inside stored notebook output - a pandas frame elides columns with
+%    an ellipsis, ModelFlow prefixes a warning with one. Undeclared they are
+%    dropped silently, leaving a hole in the line.
+\newunicodechar{⚠}{!}
+\newunicodechar{…}{...}
+\newunicodechar{—}{---}
+
+% 5. A long chapter title overflows the running header badly (a notebook
+%    title is a sentence, not a book chapter name). Truncate the header
+%    copy only - the chapter opening page and the contents keep the full
+%    title.
+\usepackage{truncate}
+\renewcommand{\chaptermark}[1]{%
+  \markboth{\chaptername\ \thechapter.\ \truncate{0.72\textwidth}{#1}}{}}
+
+% 6. Let long inline \texttt{...} spans break across lines. Without this a
+%    single code word such as replacements=('__d','__{banks}') is set as
+%    one unbreakable box and runs into the margin.
+\usepackage[htt]{hyphenat}
+
+% 7. Long words in a table cell run into the next column. MyST gives every
+%    column the same width whatever it holds, so a dataframe column named
+%    CONSUMPTION gets no more room than one named ACC. TeX would hyphenate
+%    the word, but it never hyphenates a word which starts a paragraph -
+%    and every p-column cell starts one. A zero width space in front of the
+%    cell gives it something to hyphenate after. EXO_INVESTMENT already
+%    broke, at its underscore; CONSUMPTION has nothing to break at.
+%    The hook has to be \@arrayparboxrestore, which is what sets each cell
+%    up - it clears \everypar itself, so setting that at \begin{tabular}
+%    is undone before the first cell is typeset.
+\usepackage{etoolbox}
+\makeatletter
+%    The \hfuzz set after \sloppy in the document body does not reach inside a
+%    cell: \@arrayparboxrestore ends by calling \sloppy itself, which resets it
+%    to 0.5pt. So it is set again here, or every wide dataframe reports a column
+%    of sub-point overruns.
+\apptocmd{\@arrayparboxrestore}{\everypar{\hspace{0pt}}\hfuzz=1.5pt}{}{%
+  \typeout{mfbook-template: could not patch @arrayparboxrestore}}
+\makeatother
+%    Tables also carry things which can not be hyphenated at all - a coefficient
+%    printed to ten digits, a name like BETA_LONGTERM__1 - in as many equal
+%    columns as the frame happens to have. A smaller face buys the margin back.
+%    Narrowing the padding gives every column 6pt more room for its content
+%    without widening the table: myst sizes each column as a fraction of
+%    \linewidth minus 2\tabcolsep, so what comes off the padding goes to the text.
+\AtBeginEnvironment{tabular}{\small\setlength{\tabcolsep}{3pt}}
+
+% 8. Figures come out too big. MyST asks for the same width - 0.7\linewidth -
+%    for every notebook output whatever its shape, so a square eigenvalue plot
+%    takes as much of the page as a wide time series, and a graphviz diagram
+%    is set as wide as the text block. Two knobs:
+%      \mfgraphicsscale     multiplies whatever width myst asked for
+%      \mfgraphicsmaxheight caps the height, which only bites on tall figures -
+%                           the ones that dominate a page - and leaves wide,
+%                           short plots alone
+%    Both are relative, so they hold whatever the margins are. Tune them here;
+%    they apply to every book using this template.
+\newcommand{\mfgraphicsscale}{0.75}
+\newcommand{\mfgraphicsmaxheight}{0.3\textheight}
+%    The caller's options go through \mf@gopts rather than straight into the
+%    brackets. An open bracket immediately followed by a hash opens one of
+%    myst's own template tags, so passing the argument as bracket-hash-one
+%    would break the export before latex ever sees the file. That sequence
+%    must not appear anywhere here, comments included.
+\usepackage[export]{adjustbox}   % adds the max totalheight key to \includegraphics
+\makeatletter
+\let\mf@includegraphics\includegraphics
+\renewcommand{\includegraphics}[2][]{%
+  \begingroup
+    \edef\mf@gopts{#1}%
+    \linewidth=\mfgraphicsscale\linewidth
+    \expandafter\mf@includegraphics\expandafter[\mf@gopts,%
+      max totalheight=\mfgraphicsmaxheight,center]{#2}%
+  \endgroup}
+\makeatother
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\hypersetup{
+  colorlinks,
+  linkcolor={black},
+  citecolor={black},
+  urlcolor={black}
+}
+
+% Style quotes
+\definecolor{darkblue}{rgb}{0.0, 0.0, 0.55}
+\definecolor{quoteshade}{rgb}{0.95, 0.95, 1}
+\renewenvironment{quote}{%
+  \def\FrameCommand{%
+    \hspace{1pt}%
+    {\color{darkblue}\vrule width 2pt}%
+    {\color{quoteshade}\vrule width 4pt}%
+    \colorbox{quoteshade}%
+  }%
+  \MakeFramed {\advance\hsize-\width \FrameRestore}%
+  \noindent\hspace{-8pt}% disable indenting first paragraph
+  \begin{adjustwidth}{0pt}{0pt}% adjust as needed
+  \vspace{2pt}\vspace{2pt}%
+}
+{%
+  \vspace{2pt}\end{adjustwidth}\endMakeFramed%
+}
+
+\title{\Huge \textbf{[-doc.title-]}[# if doc.subtitle #] \\ \huge [-doc.subtitle-][# endif #]}
+\author{\textsc{
+[#- for author in doc.authors #]
+  [#- if not loop.first #] and [# endif #][-author.name-][# if not loop.last and not loop.first #], [# endif #]
+[#- endfor -#]
+}}
+
+\begin{document}
+\sloppy
+
+% MyST sets each of n columns to 0.167\linewidth for a six column table, and
+% 6 x 0.167 is 1.002 - so every such table is reported as 1pt (0.35mm) overfull
+% however wide the margins are. Tolerate that rounding, so the overfull count
+% in the build log only reports overruns worth looking at. It has to come
+% after \sloppy, which sets \hfuzz to 0.5pt itself.
+\hfuzz=1.5pt
+\vfuzz=1.5pt
+
+\frontmatter
+\maketitle
+
+\tableofcontents
+% \listoffigures
+% \listoftables
+
+\mainmatter
+
+% \include{preface.tex}
+% \include{acknowledgements.tex}
+
+[- CONTENT -]
+
+
+[# if doc.bibliography #]
+\bibliography{[- doc.bibliography | join(", ") -]}
+[# endif #]
+
+\end{document}

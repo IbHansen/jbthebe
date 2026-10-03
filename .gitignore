@@ -1,0 +1,10 @@
+# Generated - master: C:\deploy\bookcontrol\shared\.gitignore (copied in by publish.bat)
+# the site is built by GitHub Actions; the pdf/tex/md exports stay local
+_build/
+exports/
+.ipynb_checkpoints/
+__pycache__/
+.jupyter_cache/
+Thumbs.db
+desktop.ini
+.DS_Store
