@@ -15,8 +15,10 @@ project:
   toc:
     - file: intro.md
       title: Introduction
-    - file: PAK_CarbonTax.ipynb
+    - file: pakstart.ipynb
       title: Carbon tax in Pakistan
+    - file: interactive.ipynb
+      title: Input widgets
 site:
   template: book-theme
   options:
