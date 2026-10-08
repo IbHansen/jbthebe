@@ -12,6 +12,18 @@ project:
   # the browser; after that every code cell can be edited and run.
   jupyter:
     lite: true
+  exports:
+    - format: pdf
+      template: latex/mfbook-template
+      output: exports/pdf/jbthebe.pdf
+      articles: &chapters
+        - intro.md
+        - pakstart.ipynb
+        - interactive.ipynb
+    - format: tex
+      template: latex/mfbook-template
+      output: exports/tex/jbthebe.tex
+      articles: *chapters
   toc:
     - file: intro.md
       title: Introduction
