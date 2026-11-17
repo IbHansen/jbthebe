@@ -13,6 +13,8 @@
 !*.md
 !*.ipynb
 !/references.bib
+# Python files in the root, which notebooks import and pages show (chile's chile_widgets.py)
+!/*.py
 
 # pictures the pages show (figures in .md files), in any folder
 !*.png
@@ -20,6 +22,9 @@
 !*.jpeg
 !*.gif
 !*.webp
+# ModelFlow's drawings in a graph\ folder, also as .svg (other .svg files, like the
+# diagram sources of general, stay local)
+!**/graph/**/*.svg
 
 # the repo itself
 !/.gitignore
